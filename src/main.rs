@@ -9,11 +9,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{BufReader, BufWriter, Write};
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 use text_colorizer::{ColoredString, Colorize};
-use uuid::Uuid;
 use std::dbg;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
@@ -76,7 +74,7 @@ fn main() -> anyhow::Result<()> {
 
     // Load regex patterns from JSON file
     let patterns_json_content = fs::read_to_string(pattern_file)
-        .map_err(|err| anyhow!("{}Cannot open {pattern_file}", *RED_ERROR_STRING))?;
+        .map_err(|err| anyhow!("{}Cannot open {pattern_file}, {err}", *RED_ERROR_STRING))?;
 
     let patterns: Vec<Pattern> = utils::get_patterns_from_json(patterns_json_content)?;
 
@@ -98,7 +96,7 @@ fn main() -> anyhow::Result<()> {
         fs::create_dir(&output_folder).expect("Failed to create output folder.");
     };
 
-    let (mut files, errors) = utils::get_files_from_folder(input_folder)?;
+    let (mut files, _) = utils::get_files_from_folder(input_folder)?;
 
     let results = Arc::new(Mutex::new(Vec::<anyhow::Result<()>>::new()));
 
@@ -106,9 +104,10 @@ fn main() -> anyhow::Result<()> {
         
         if let Some(extension) = path.extension() {
             if extension == "txt" {
-                redact::redact_txt_and_write_json(path, &regex_vec, &output_folder);
+                let result = redact::redact_txt_and_write_json(path, &regex_vec, &output_folder);
+                results.lock().expect("`results` cannot be locked").push(result);
             } else {
-                println!(
+                eprintln!(
                     "{}INVALID EXTENSION: {} - Not yet implemented",
                     *RED_ERROR_STRING,
                     extension.to_string_lossy(),
@@ -117,8 +116,12 @@ fn main() -> anyhow::Result<()> {
             };
             ()
         } else {
-            println!("{}EXTENSION not found", *RED_ERROR_STRING);
+            eprintln!("{}EXTENSION not found", *RED_ERROR_STRING);
+            std::process::exit(1);
         }
     }); // end of for_each
+    println!(
+        "{:?}", results.as_ref()
+    );
     Ok(())
 }

@@ -5,9 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 use std::ops::Deref;
-use std::sync::{Arc, Mutex};
 use std::{
-    collections::HashMap,
     path::{Path, PathBuf},
 };
 use text_colorizer::Colorize;
@@ -64,12 +62,6 @@ pub(crate) fn get_files_from_folder(folder: &str) -> Result<(Vec<PathBuf>, Vec<a
         })
         .collect();
     Ok((entries, errors))
-}
-
-pub(crate) fn get_output_file_path(file_path: &PathBuf) -> Result<PathBuf> {
-    let file_name = file_path.file_name().unwrap().to_str().unwrap();
-    let redacted_file_name = format!("{file_name}-unredact.json");
-    anyhow::Ok(redacted_file_name.into())
 }
 
 pub(crate) fn redact_text_get_data(
