@@ -8,11 +8,8 @@ use rayon::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::{BufReader, BufWriter, Write};
 use std::path::Path;
-use std::sync::{Arc, Mutex};
 use text_colorizer::{ColoredString, Colorize};
-use std::dbg;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 struct Pattern {
@@ -27,6 +24,12 @@ struct Redacted {
     text: String,
 }
 
+#[derive(Debug, Serialize, PartialEq, Deserialize, Clone, Default)]
+enum FileOrFolder {
+    File,
+    Folder,
+}
+
 lazy_static! {
     static ref RED_ERROR_STRING: ColoredString = "ERROR: ".red().bold();
 }
@@ -37,10 +40,10 @@ fn main() -> anyhow::Result<()> {
         .author("Your Name <you@example.com>")
         .about("Redacts text matching given regex patterns.")
         .arg(
-            Arg::with_name("input")
-                .short('i')
-                .long("input")
-                .value_name("INPUT")
+            Arg::with_name("folder")
+                .short('d')
+                .long("folder")
+                .value_name("FOLDER")
                 .help("Sets the input folder to use")
                 .takes_value(true)
                 .required(true),
@@ -58,8 +61,8 @@ fn main() -> anyhow::Result<()> {
         .try_get_matches()
         .unwrap_or_else(|e| e.exit());
 
-    let input_folder = matches.value_of("input").ok_or(anyhow!(
-        "{}`input` CLI Parameter not found",
+    let input_folder = matches.value_of("folder").ok_or(anyhow!(
+        "{}`folder` CLI Parameter not found",
         "Error".bright_red().bold()
     ))?;
     let pattern_file = "patterns.json";
@@ -98,30 +101,20 @@ fn main() -> anyhow::Result<()> {
 
     let (mut files, _) = utils::get_files_from_folder(input_folder)?;
 
-    let results = Arc::new(Mutex::new(Vec::<anyhow::Result<()>>::new()));
-
-    files.par_iter_mut().for_each(|path| {
+    let results: Vec<anyhow::Result<()>> = files.par_iter_mut().map(|path| {
         
         if let Some(extension) = path.extension() {
-            if extension == "txt" {
-                let result = redact::redact_txt_and_write_json(path, &regex_vec, &output_folder);
-                results.lock().expect("`results` cannot be locked").push(result);
-            } else {
-                eprintln!(
-                    "{}INVALID EXTENSION: {} - Not yet implemented",
-                    *RED_ERROR_STRING,
-                    extension.to_string_lossy(),
-                );
-                std::process::exit(1);
-            };
-            ()
+            match extension.to_str() {
+                Some("txt") => redact::redact_txt_and_write_json(path, &regex_vec, &output_folder),
+                Some(_) => Err(anyhow!("{}Extension: {:?} not implemented", *RED_ERROR_STRING, extension)),
+                None => Err(anyhow!("{}Unable to convert `OsStr` to `str`", *RED_ERROR_STRING)),
+            }
         } else {
-            eprintln!("{}EXTENSION not found", *RED_ERROR_STRING);
-            std::process::exit(1);
+            Err(anyhow!("{}Extension of path=`{}` not found", *RED_ERROR_STRING, path.display()))
         }
-    }); // end of for_each
+    }).collect::<Vec<anyhow::Result<()>>>(); // end of for_each
     println!(
-        "{:?}", results.as_ref()
+        "Processing results: {:?}", results
     );
     Ok(())
 }
