@@ -106,6 +106,7 @@ fn main() -> anyhow::Result<()> {
         if let Some(extension) = path.extension() {
             match extension.to_str() {
                 Some("txt") => redact::redact_txt_and_write_json(path, &regex_vec, &output_folder),
+                Some("pdf") => redact::redact_pdf_and_write_json(path, &regex_vec, &output_folder),
                 Some(_) => Err(anyhow!("{}Extension: {:?} not implemented", *RED_ERROR_STRING, extension)),
                 None => Err(anyhow!("{}Unable to convert `OsStr` to `str`", *RED_ERROR_STRING)),
             }
@@ -113,8 +114,7 @@ fn main() -> anyhow::Result<()> {
             Err(anyhow!("{}Extension of path=`{}` not found", *RED_ERROR_STRING, path.display()))
         }
     }).collect::<Vec<anyhow::Result<()>>>(); // end of for_each
-    println!(
-        "Processing results: {:?}", results
-    );
+
+    println!("Processed results: {:?}", results);
     Ok(())
 }
