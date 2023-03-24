@@ -1,21 +1,18 @@
 use crate::Pattern;
 use anyhow::{anyhow, Result};
+use rand::{distributions::Alphanumeric, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 use std::ops::Deref;
-use std::{
-    path::{Path, PathBuf},
-};
-use text_colorizer::Colorize;
-use uuid::Uuid;
-
+use std::path::{Path, PathBuf};
+use text_colorizer::Colorize; // 0.8
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
+    unredacted_text: String,
     redacted_text: String,
-    uuid: String,
 }
 
 pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pattern>> {
@@ -44,11 +41,9 @@ pub(crate) fn get_files_from_folder(folder: &str) -> Result<(Vec<PathBuf>, Vec<a
         .into_iter()
         .map(Result::unwrap)
         .map(|entry| entry.path())
-        .filter(|path| {
-            match fs::metadata(path) {
-                Ok(md) => md.is_file(),
-                Err(_) => false,
-            }
+        .filter(|path| match fs::metadata(path) {
+            Ok(md) => md.is_file(),
+            Err(_) => false,
         })
         .collect();
     let errors = errors
@@ -74,19 +69,26 @@ pub(crate) fn redact_text_get_data(
     for regex in regex_vec {
         let matches: Vec<_> = regex.find_iter(&original_text).collect();
         for mat in matches.iter().rev() {
-            let uuid = Uuid::new_v4();
-            let redacted_str = format!("[REDACTED:{}]", uuid);
+            let randomized_str = randomize_string(mat.as_str());
+            let redacted_str = format!("[REDACTED:{}]", randomized_str);
             redacted_text.replace_range(mat.start()..mat.end(), &redacted_str);
-            redacted_data.push(
-                RedactedData {
-                    redacted_text: mat.as_str().to_owned(),
-                    uuid: uuid.to_string(),
-                },
-            );
+            redacted_data.push(RedactedData {
+                unredacted_text: mat.as_str().to_owned(),
+                redacted_text: randomized_str.to_owned(),
+            });
         }
     }
     Ok((redacted_text, redacted_data))
 }
+
+fn randomize_string(s: &str) -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(s.len())
+        .map(char::from)
+        .collect()
+}
+
 #[derive(Debug)]
 struct AnyhowErrVec(Vec<anyhow::Error>);
 

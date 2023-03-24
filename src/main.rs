@@ -24,7 +24,7 @@ struct Redacted {
     text: String,
 }
 
-#[derive(Debug, Serialize, PartialEq, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, PartialEq, Deserialize, Clone)]
 enum FileOrFolder {
     File,
     Folder,

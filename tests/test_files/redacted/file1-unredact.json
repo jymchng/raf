@@ -1,18 +1,18 @@
 [
   {
-    "redacted_text": "doe@my-university.edu",
-    "uuid": "dae220a5-d5c2-49fc-979a-350089d657c9"
+    "unredacted_text": "doe@my-university.edu",
+    "redacted_text": "tcqsL7Sk90JdfrRLVyxgw"
   },
   {
-    "redacted_text": "alice_123+test@gmail.co.uk",
-    "uuid": "2c06c52d-f50e-41f9-a647-88b9609dba90"
+    "unredacted_text": "alice_123+test@gmail.co.uk",
+    "redacted_text": "mUd4Qyc8WuUmURbhLRYWbEitvn"
   },
   {
-    "redacted_text": "jdoe123@mycompany.net",
-    "uuid": "5027a8c8-5e17-4824-ac6d-b9b16e2f0c58"
+    "unredacted_text": "jdoe123@mycompany.net",
+    "redacted_text": "WoWNTEhRIp9Lf8UpnVuNt"
   },
   {
-    "redacted_text": "john.doe@example.com",
-    "uuid": "a07eb238-9737-4871-b374-289b985d367c"
+    "unredacted_text": "john.doe@example.com",
+    "redacted_text": "vct26jOXBl6YislpPsX4"
   }
 ]
