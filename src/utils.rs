@@ -7,7 +7,7 @@ use serde_json;
 use std::fs;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-use text_colorizer::Colorize; // 0.8
+use crate::RED_ERROR_STRING;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
@@ -19,7 +19,7 @@ pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pa
     serde_json::from_str(&json_file_content).map_err(|err| {
         anyhow!(
             "{}Failed to read patterns from the content of the json file, {err}",
-            "ERROR: ".bright_red().bold()
+            *RED_ERROR_STRING,
         )
     })
 }
@@ -29,7 +29,7 @@ pub(crate) fn get_files_from_folder(folder: &str) -> Result<(Vec<PathBuf>, Vec<a
     let entries = path.read_dir().map_err(|err| {
         anyhow!(
             "{}Directory: {} cannot be read, err = {err}",
-            "ERROR: ".red().bold(),
+            *RED_ERROR_STRING,
             path.display()
         )
     })?;
@@ -52,7 +52,7 @@ pub(crate) fn get_files_from_folder(folder: &str) -> Result<(Vec<PathBuf>, Vec<a
         .map(|err| {
             anyhow!(
                 "{}Directory Entry cannot be read, err = {err}",
-                "ERROR: ".red().bold()
+                *RED_ERROR_STRING
             )
         })
         .collect();
@@ -63,18 +63,17 @@ pub(crate) fn redact_text_get_data(
     text: &str,
     regex_vec: &[Regex],
 ) -> Result<(String, Vec<RedactedData>)> {
-    let original_text = String::from(text);
-    let mut redacted_text = original_text.clone();
+    let mut redacted_text = String::from(text);
     let mut redacted_data: Vec<RedactedData> = Vec::new();
     for regex in regex_vec {
-        let matches: Vec<_> = regex.find_iter(&original_text).collect();
+        let matches: Vec<_> = regex.find_iter(text).collect();
         for mat in matches.iter().rev() {
             let randomized_str = randomize_string(mat.as_str());
-            let redacted_str = format!("[REDACTED:{}]", randomized_str);
+            let redacted_str = "[REDACTED:".to_string() + &randomized_str + "]";
             redacted_text.replace_range(mat.start()..mat.end(), &redacted_str);
             redacted_data.push(RedactedData {
                 unredacted_text: mat.as_str().to_owned(),
-                redacted_text: randomized_str.to_owned(),
+                redacted_text: randomized_str,
             });
         }
     }
@@ -182,27 +181,4 @@ mod tests {
         Ok(())
     }
 
-    #[test]
-    fn test_redact_text_get_data() -> Result<()> {
-        use std::collections::HashMap;
-        use std::sync::{Arc, Mutex};
-        let text = "Hello 123 world!";
-        let regex_vec = vec![Regex::new("\\d+").unwrap()];
-        let counter = Arc::new(Mutex::new(0));
-        let expected_redacted_text =
-            "Hello [REDACTED:94f39d29-7a12-4a38-9c50-0ae2eceb5d6a] world!".to_owned();
-        let mut expected_redacted_data: HashMap<String, RedactedData> = HashMap::new();
-        let uuid = Uuid::parse_str("94f39d29-7a12-4a38-9c50-0ae2eceb5d6a").unwrap();
-        expected_redacted_data.insert(
-            uuid.to_string(),
-            RedactedData {
-                redacted_text: "123".to_owned(),
-                uuid: uuid.to_string(),
-            },
-        );
-        let (actual_redacted_text, actual_redacted_data) = redact_text_get_data(&text, &regex_vec)?;
-        assert_eq!(expected_redacted_text, actual_redacted_text);
-        assert_eq!(expected_redacted_data, actual_redacted_data);
-        Ok(())
-    }
 }

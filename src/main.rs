@@ -18,12 +18,6 @@ struct Pattern {
     types: Vec<String>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Deserialize, Clone, Default)]
-struct Redacted {
-    uuid: String,
-    text: String,
-}
-
 #[derive(Debug, Serialize, PartialEq, Deserialize, Clone)]
 enum FileOrFolder {
     File,
@@ -75,25 +69,21 @@ fn main() -> anyhow::Result<()> {
         .map(|s| s.to_owned())
         .collect();
 
-    // Load regex patterns from JSON file
     let patterns_json_content = fs::read_to_string(pattern_file)
         .map_err(|err| anyhow!("{}Cannot open {pattern_file}, {err}", *RED_ERROR_STRING))?;
 
     let patterns: Vec<Pattern> = utils::get_patterns_from_json(patterns_json_content)?;
 
-    // Filter patterns based on types
     let filtered_patterns: Vec<Pattern> = patterns
         .into_iter()
         .filter(|p| p.types.iter().any(|t| types.contains(&t)))
         .collect();
 
-    // Compile regex patterns
     let regex_vec: Vec<Regex> = filtered_patterns
         .iter()
         .map(|p| Regex::new(&p.pattern).expect("Invalid regex pattern."))
         .collect();
 
-    // Create output folder
     let output_folder = Path::new(input_folder).join("redacted");
     if !output_folder.exists() {
         fs::create_dir(&output_folder).expect("Failed to create output folder.");

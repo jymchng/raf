@@ -6,7 +6,6 @@ use regex::Regex;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use std::dbg;
 
 pub(crate) fn redact_txt_and_write_json(
     path: &mut PathBuf,
@@ -90,8 +89,7 @@ pub(crate) fn redact_pdf_and_write_json(
                 )
             })?;
         all_redacted_data.extend(redacted_data);
-        dbg!(&extracted_text, &redacted_text);
-        pdf.replace_text(page_num, "jdoe123@mycompany.net", "hello WORLD")
+        pdf.replace_text(page_num, &extracted_text, &redacted_text)
             .map_err(|err| {
                 anyhow!(
                     "{}Unable to get replace the text of pdf for page number {page_num}, {err}",
@@ -99,11 +97,6 @@ pub(crate) fn redact_pdf_and_write_json(
                 )
             })?;
     }
-
-    dbg!(pdf.extract_text(&[2]).unwrap());
-
-    pdf.replace_text(2, "jdoe123@mycompany.net", "hello WORLD").unwrap();
-    dbg!(pdf.extract_text(&[2]).unwrap());
 
     let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
         "{} Unable to join {} with the `file_name` of {}",

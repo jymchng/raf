@@ -4,6 +4,6 @@ Well, to start with, email addresses are usually composed of two parts: a userna
 
 To ensure that an email address is valid, it needs to match a certain pattern. This pattern can be quite complex, but a common one is the following: ([a-z0-9!#$%&'*+/=?^_`{|.}~-]+@(?:a-z0-9?.)+a-z0-9?). This pattern checks that the username and domain name are properly formatted, and that they're separated by an "@" symbol.
 
-For example, [REDACTED:BwEiL1ekgqp0mCEUI4aR], [REDACTED:7Vl9q3A4VVtwXPIWr7WhV], [REDACTED:qJhK4z8NEE878bcSLcYZJ8Xc6F], and [REDACTED:vtVst42hMyQSDPaKkocjnZhp3N] all match this pattern, and are therefore considered valid email addresses.
+For example, [REDACTED:wu1cpFQ7C1SIuBkmF4cO], [REDACTED:tY5N0ircOdufFkFIyNrS2], [REDACTED:UuqBnAumJOjqWbvgLB0atfeksX], and [REDACTED:vpfm0hnQJDz9eohWY15EeAJfci] all match this pattern, and are therefore considered valid email addresses.
 
 So next time you're asked to provide your email address, you can rest assured that if it matches this pattern, it's a valid one!
