@@ -1,4 +1,5 @@
-use crate::Pattern;
+use crate::utils;
+use crate::RED_ERROR_STRING;
 use anyhow::{anyhow, Result};
 use rand::{distributions::Alphanumeric, Rng};
 use regex::Regex;
@@ -6,13 +7,20 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 use std::ops::Deref;
-use std::path::{Path, PathBuf};
-use crate::RED_ERROR_STRING;
+use std::path::PathBuf;
+use std::dbg;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
     unredacted_text: String,
     redacted_text: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
+pub struct Pattern {
+    pattern: String,
+    #[serde(rename = "type")]
+    types: Vec<String>,
 }
 
 pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pattern>> {
@@ -24,8 +32,7 @@ pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pa
     })
 }
 
-pub(crate) fn get_files_from_folder(folder: &str) -> Result<(Vec<PathBuf>, Vec<anyhow::Error>)> {
-    let path = Path::new(folder);
+pub(crate) fn get_files_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec<anyhow::Error>)> {
     let entries = path.read_dir().map_err(|err| {
         anyhow!(
             "{}Directory: {} cannot be read, err = {err}",
@@ -68,6 +75,7 @@ pub(crate) fn redact_text_get_data(
     for regex in regex_vec {
         let matches: Vec<_> = regex.find_iter(text).collect();
         for mat in matches.iter().rev() {
+            dbg!(mat.as_str());
             let randomized_str = randomize_string(mat.as_str());
             let redacted_str = "[REDACTED:".to_string() + &randomized_str + "]";
             redacted_text.replace_range(mat.start()..mat.end(), &redacted_str);
@@ -86,6 +94,24 @@ fn randomize_string(s: &str) -> String {
         .take(s.len())
         .map(char::from)
         .collect()
+}
+
+pub(crate) fn get_pattern_vec(pattern_file: &str, types: Vec<String>) -> Result<Vec<Regex>> {
+    let patterns_json_content = fs::read_to_string(pattern_file)
+        .map_err(|err| anyhow!("{}Cannot open {pattern_file}, {err}", *RED_ERROR_STRING))?;
+
+    let patterns = utils::get_patterns_from_json(patterns_json_content)?;
+
+    let filtered_patterns: Vec<Pattern> = patterns
+        .into_iter()
+        .filter(|p| p.types.iter().any(|t| types.contains(&t)))
+        .collect();
+
+    let regex_vec: Vec<Regex> = filtered_patterns
+        .iter()
+        .map(|p| Regex::new(&p.pattern).expect("Invalid regex pattern."))
+        .collect();
+    Ok(regex_vec)
 }
 
 #[derive(Debug)]
@@ -180,5 +206,4 @@ mod tests {
         assert_eq!(expected_output_path, actual_output_path);
         Ok(())
     }
-
 }

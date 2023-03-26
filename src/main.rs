@@ -1,110 +1,61 @@
-mod utils;
 mod redact;
+mod utils;
+mod args;
 
-use anyhow::{anyhow, Ok};
-use clap::{App, Arg};
+use anyhow::Ok;
+use clap::Parser;
 use lazy_static::lazy_static;
 use rayon::prelude::*;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
 use text_colorizer::{ColoredString, Colorize};
-
-#[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
-struct Pattern {
-    pattern: String,
-    #[serde(rename = "type")]
-    types: Vec<String>,
-}
-
-#[derive(Debug, Serialize, PartialEq, Deserialize, Clone)]
-enum FileOrFolder {
-    File,
-    Folder,
-}
+use crate::args::*;
 
 lazy_static! {
     static ref RED_ERROR_STRING: ColoredString = "ERROR: ".red().bold();
 }
 
 fn main() -> anyhow::Result<()> {
-    let matches = App::new("text-redactor")
-        .version("1.0")
-        .author("Your Name <you@example.com>")
-        .about("Redacts text matching given regex patterns.")
-        .arg(
-            Arg::with_name("folder")
-                .short('d')
-                .long("folder")
-                .value_name("FOLDER")
-                .help("Sets the input folder to use")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("types")
-                .short('t')
-                .long("types")
-                .value_name("TYPES")
-                .help("Types of patterns to use for redaction")
-                .takes_value(true)
-                .multiple(true)
-                .required(true),
-        )
-        .try_get_matches()
-        .unwrap_or_else(|e| e.exit());
+    let cmd = Opts::parse().cmd;
 
-    let input_folder = matches.value_of("folder").ok_or(anyhow!(
-        "{}`folder` CLI Parameter not found",
-        "Error".bright_red().bold()
-    ))?;
-    let pattern_file = "patterns.json";
-    let types: Vec<String> = matches
-        .get_many::<String>("types")
-        .ok_or(anyhow!(
-            "{}`types` CLI Parameter not found",
-            *RED_ERROR_STRING,
-        ))?
-        .map(|s| s.to_owned())
-        .collect();
+    match cmd {
+        FileOrFolder::Folder(opts) => {
+            println!(
+                "Folder command executed with path {:?} and types {:?}",
+                opts.path, opts.types
+            );
+            let output_folder = opts.path.join("redacted");
+            let regex_vec: Vec<Regex> = utils::get_pattern_vec("patterns.json", opts.types)?;
 
-    let patterns_json_content = fs::read_to_string(pattern_file)
-        .map_err(|err| anyhow!("{}Cannot open {pattern_file}, {err}", *RED_ERROR_STRING))?;
+            if !output_folder.exists() {
+                fs::create_dir(&output_folder).expect("Failed to create output folder.");
+            };
 
-    let patterns: Vec<Pattern> = utils::get_patterns_from_json(patterns_json_content)?;
+            let (mut files, _) = utils::get_files_from_folder(&opts.path)?;
 
-    let filtered_patterns: Vec<Pattern> = patterns
-        .into_iter()
-        .filter(|p| p.types.iter().any(|t| types.contains(&t)))
-        .collect();
+            let results: Vec<anyhow::Result<()>> = files
+                .par_iter_mut()
+                .map(|path| {
+                    redact::redact_one_file(path, &regex_vec, &output_folder)
+                })
+                .collect::<Vec<anyhow::Result<()>>>(); // end of for_each
 
-    let regex_vec: Vec<Regex> = filtered_patterns
-        .iter()
-        .map(|p| Regex::new(&p.pattern).expect("Invalid regex pattern."))
-        .collect();
-
-    let output_folder = Path::new(input_folder).join("redacted");
-    if !output_folder.exists() {
-        fs::create_dir(&output_folder).expect("Failed to create output folder.");
-    };
-
-    let (mut files, _) = utils::get_files_from_folder(input_folder)?;
-
-    let results: Vec<anyhow::Result<()>> = files.par_iter_mut().map(|path| {
-        
-        if let Some(extension) = path.extension() {
-            match extension.to_str() {
-                Some("txt") => redact::redact_txt_and_write_json(path, &regex_vec, &output_folder),
-                Some("pdf") => redact::redact_pdf_and_write_json(path, &regex_vec, &output_folder),
-                Some(_) => Err(anyhow!("{}Extension: {:?} not implemented", *RED_ERROR_STRING, extension)),
-                None => Err(anyhow!("{}Unable to convert `OsStr` to `str`", *RED_ERROR_STRING)),
-            }
-        } else {
-            Err(anyhow!("{}Extension of path=`{}` not found", *RED_ERROR_STRING, path.display()))
+            println!("Processed results: {:?}", results);
+            Ok(())
         }
-    }).collect::<Vec<anyhow::Result<()>>>(); // end of for_each
+        FileOrFolder::File(mut opts) => {
+            println!(
+                "File command executed with path {:?} and types {:?}",
+                opts.path, opts.types
+            );
+            let output_folder = opts.path.parent().unwrap_or(&opts.path).join("redacted");
+            let regex_vec: Vec<Regex> = utils::get_pattern_vec("patterns.json", opts.types)?;
 
-    println!("Processed results: {:?}", results);
-    Ok(())
+            if !output_folder.exists() {
+                fs::create_dir(&output_folder).expect("Failed to create output folder.");
+            };
+            redact::redact_one_file(&mut opts.path, &regex_vec, &output_folder)?;
+            Ok(())
+        }
+    }
 }

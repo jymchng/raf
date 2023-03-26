@@ -71,18 +71,19 @@ pub(crate) fn redact_pdf_and_write_json(
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
     let mut pdf = Document::load(path.clone())
         .map_err(|err| anyhow!("{}Unable to load the pdf, {err}", *RED_ERROR_STRING))?;
-    let page_nums: u32 = pdf
-        .get_pages()
-        .len()
-        .try_into()
-        .map_err(|err| anyhow!("{}Unable to convert `usize` into `u32`, {err}", *RED_ERROR_STRING))?;
+    let page_nums: u32 = pdf.get_pages().len().try_into().map_err(|err| {
+        anyhow!(
+            "{}Unable to convert `usize` into `u32`, {err}",
+            *RED_ERROR_STRING
+        )
+    })?;
 
     for page_num in 1..page_nums + 1 {
         let extracted_text = pdf
             .extract_text(&[page_num])
             .map_err(|err| anyhow!("{}Unable to extract the text, {err}", *RED_ERROR_STRING))?;
-        let (redacted_text, redacted_data) = utils::redact_text_get_data(&extracted_text, &regex_vec)
-            .map_err(|err| {
+        let (redacted_text, redacted_data) =
+            utils::redact_text_get_data(&extracted_text, &regex_vec).map_err(|err| {
                 anyhow!(
                     "{}Unable to get redacted text and the unredacted data, {err}",
                     *RED_ERROR_STRING
@@ -144,4 +145,32 @@ pub(crate) fn redact_pdf_and_write_json(
     serde_json::to_writer_pretty(unredacted_file, &all_redacted_data)
         .map_err(|err| anyhow!("{}Failed to write file, {err}", *RED_ERROR_STRING))?;
     anyhow::Ok(())
+}
+
+pub(crate) fn redact_one_file(path: &mut PathBuf, regex_vec: &[Regex], output_folder: &PathBuf) -> anyhow::Result<()> {
+    if let Some(extension) = path.extension() {
+        match extension.to_str() {
+            Some("txt") => {
+                redact_txt_and_write_json(path, &regex_vec, &output_folder)
+            }
+            Some("pdf") => {
+                redact_pdf_and_write_json(path, &regex_vec, &output_folder)
+            }
+            Some(_) => Err(anyhow!(
+                "{}Extension: {:?} not implemented",
+                *RED_ERROR_STRING,
+                extension
+            )),
+            None => Err(anyhow!(
+                "{}Unable to convert `OsStr` to `str`",
+                *RED_ERROR_STRING
+            )),
+        }
+    } else {
+        Err(anyhow!(
+            "{}Extension of path=`{}` not found",
+            *RED_ERROR_STRING,
+            path.display()
+        ))
+    }
 }
