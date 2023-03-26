@@ -1,7 +1,8 @@
+mod args;
 mod redact;
 mod utils;
-mod args;
 
+use crate::args::*;
 use anyhow::Ok;
 use clap::Parser;
 use lazy_static::lazy_static;
@@ -9,7 +10,6 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::fs;
 use text_colorizer::{ColoredString, Colorize};
-use crate::args::*;
 
 lazy_static! {
     static ref RED_ERROR_STRING: ColoredString = "ERROR: ".red().bold();
@@ -35,9 +35,7 @@ fn main() -> anyhow::Result<()> {
 
             let results: Vec<anyhow::Result<()>> = files
                 .par_iter_mut()
-                .map(|path| {
-                    redact::redact_one_file(path, &regex_vec, &output_folder)
-                })
+                .map(|path| redact::redact_one_file(path, &regex_vec, &output_folder))
                 .collect::<Vec<anyhow::Result<()>>>(); // end of for_each
 
             println!("Processed results: {:?}", results);

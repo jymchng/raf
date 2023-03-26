@@ -147,15 +147,15 @@ pub(crate) fn redact_pdf_and_write_json(
     anyhow::Ok(())
 }
 
-pub(crate) fn redact_one_file(path: &mut PathBuf, regex_vec: &[Regex], output_folder: &PathBuf) -> anyhow::Result<()> {
+pub(crate) fn redact_one_file(
+    path: &mut PathBuf,
+    regex_vec: &[Regex],
+    output_folder: &PathBuf,
+) -> anyhow::Result<()> {
     if let Some(extension) = path.extension() {
         match extension.to_str() {
-            Some("txt") => {
-                redact_txt_and_write_json(path, &regex_vec, &output_folder)
-            }
-            Some("pdf") => {
-                redact_pdf_and_write_json(path, &regex_vec, &output_folder)
-            }
+            Some("txt") => redact_txt_and_write_json(path, &regex_vec, &output_folder),
+            Some("pdf") => redact_pdf_and_write_json(path, &regex_vec, &output_folder),
             Some(_) => Err(anyhow!(
                 "{}Extension: {:?} not implemented",
                 *RED_ERROR_STRING,

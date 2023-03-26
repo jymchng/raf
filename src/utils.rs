@@ -5,10 +5,10 @@ use rand::{distributions::Alphanumeric, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::dbg;
 use std::fs;
 use std::ops::Deref;
 use std::path::PathBuf;
-use std::dbg;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
