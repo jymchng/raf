@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
         .get_many::<String>("types")
         .ok_or(anyhow!(
             "{}`types` CLI Parameter not found",
-            "Error".bright_red().bold()
+            *RED_ERROR_STRING,
         ))?
         .map(|s| s.to_owned())
         .collect();
