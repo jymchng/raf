@@ -5,7 +5,7 @@ use docx_rs::*;
 use lopdf::Document;
 use regex::Regex;
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::PathBuf;
 
 pub(crate) fn redact_txt_and_write_json(
@@ -19,7 +19,7 @@ pub(crate) fn redact_txt_and_write_json(
         .map_err(|err| anyhow!("Unable to get redacted text and the unredacted data, {err}"))?;
     all_redacted_data.extend(redacted_data);
 
-    utils::write_redacted_text(redacted_text, &*path, output_folder);
+    utils::write_redacted_text(redacted_text, &*path, output_folder)?;
     utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
     anyhow::Ok(())
 }
@@ -82,7 +82,7 @@ pub(crate) fn redact_pdf_and_write_json(
         )
     })?;
     utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
-    
+
     anyhow::Ok(())
 }
 
@@ -116,11 +116,11 @@ pub(crate) fn redact_one_file(
 }
 
 pub(crate) fn redact_docx_and_write_json(
-    docx_filepath: &mut PathBuf,
+    path: &mut PathBuf,
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
-    let file_name = std::path::Path::new(docx_filepath)
+    let file_name = std::path::Path::new(path)
         .file_name()
         .unwrap_or_default()
         .to_str()
@@ -128,28 +128,45 @@ pub(crate) fn redact_docx_and_write_json(
 
     let output_file_path = std::path::Path::new(output_folder).join(file_name);
 
-    fs::copy(&*docx_filepath, &*output_file_path).map_err(|err| {
+    fs::copy(&*path, &*output_file_path).map_err(|err| {
         anyhow!(
-            "{}Error in copying from {} to {}",
+            "{}Error in copying from {} to {}, {err}",
             *RED_ERROR_STRING,
-            docx_filepath.display(),
+            path.display(),
             output_file_path.display(),
         )
     })?;
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
 
-    let mut document: docx_rs::Document =
-        docx_rs::read_docx(&read_to_vec(&docx_filepath)?)?.document;
-    for child in document.children.iter_mut() {
+    let mut original_docx = docx_rs::read_docx(&read_to_vec(&output_file_path)?)?;
+    let mut original_docu = original_docx.document; // pluck `document` out
+    for child in original_docu.children.iter_mut() {
         if let DocumentChild::Paragraph(para) = child {
-            replace_matches_in_paragraph(
-                para,
-                regex_vec,
-                &mut all_redacted_data,
-                utils::randomize_string,
-            );
+            replace_matches_in_paragraph(para, regex_vec, &mut all_redacted_data);
         }
     }
+    original_docx.document = original_docu; // insert `document` back
+
+    let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
+        "{} Unable to join {} with the `file_name` of {}",
+        *RED_ERROR_STRING,
+        output_folder.display(),
+        path.display()
+    ))?);
+
+    let file = fs::File::create(output_path).map_err(|err| {
+        anyhow!(
+            "{}Unable to create the redacted text file, {err}",
+            *RED_ERROR_STRING
+        )
+    })?;
+    original_docx.build().pack(file).map_err(|err| {
+        anyhow!(
+            "{}Unable to pack the output_docx into a `zip` file, {err}",
+            *RED_ERROR_STRING,
+        )
+    })?;
+    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
     anyhow::Ok(())
 }
 
@@ -163,7 +180,6 @@ pub(crate) fn replace_matches_in_paragraph<'a>(
     para: &mut docx_rs::Paragraph,
     regex_vec: &[Regex],
     all_redacted_data: &mut Vec<RedactedData>,
-    replacer: impl Fn(&str) -> String,
 ) {
     // For now support only run and ins.
     for c in para.children.iter_mut() {
@@ -173,8 +189,10 @@ pub(crate) fn replace_matches_in_paragraph<'a>(
                     if let InsertChild::Run(r) = c {
                         for c in r.children.iter_mut() {
                             if let RunChild::Text(t) = c {
-                                let (_, redacted_data) = utils::redact_text_get_data(&t.text, &regex_vec)
-                                .unwrap_or_default();
+                                let (redacted_text, redacted_data) =
+                                    utils::redact_text_get_data(&t.text, &regex_vec)
+                                        .unwrap_or_default();
+                                t.text = redacted_text;
                                 all_redacted_data.extend(redacted_data);
                             }
                         }
@@ -184,9 +202,10 @@ pub(crate) fn replace_matches_in_paragraph<'a>(
             ParagraphChild::Run(run) => {
                 for c in run.children.iter_mut() {
                     if let RunChild::Text(t) = c {
-                        let mut offset = 0;
-                        let mut new_text = "".to_string();
-                        todo!()
+                        let (redacted_text, redacted_data) =
+                            utils::redact_text_get_data(&t.text, &regex_vec).unwrap_or_default();
+                        t.text = redacted_text;
+                        all_redacted_data.extend(redacted_data);
                     }
                 }
             }

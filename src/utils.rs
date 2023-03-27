@@ -76,7 +76,6 @@ pub(crate) fn redact_text_get_data(
     for regex in regex_vec {
         let matches: Vec<_> = regex.find_iter(text).collect();
         for mat in matches.iter().rev() {
-            dbg!(mat.as_str());
             let randomized_str = randomize_string(mat.as_str());
             let redacted_str = "[REDACTED:".to_string() + &randomized_str + "]";
             redacted_text.replace_range(mat.start()..mat.end(), &redacted_str);
