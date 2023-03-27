@@ -120,25 +120,9 @@ pub(crate) fn redact_docx_and_write_json(
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
-    let file_name = std::path::Path::new(path)
-        .file_name()
-        .unwrap_or_default()
-        .to_str()
-        .unwrap_or_default();
-
-    let output_file_path = std::path::Path::new(output_folder).join(file_name);
-
-    fs::copy(&*path, &*output_file_path).map_err(|err| {
-        anyhow!(
-            "{}Error in copying from {} to {}, {err}",
-            *RED_ERROR_STRING,
-            path.display(),
-            output_file_path.display(),
-        )
-    })?;
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
 
-    let mut original_docx = docx_rs::read_docx(&read_to_vec(&output_file_path)?)?;
+    let mut original_docx = docx_rs::read_docx(&read_to_vec(&path)?)?;
     let mut original_docu = original_docx.document; // pluck `document` out
     for child in original_docu.children.iter_mut() {
         if let DocumentChild::Paragraph(para) = child {
@@ -160,6 +144,7 @@ pub(crate) fn redact_docx_and_write_json(
             *RED_ERROR_STRING
         )
     })?;
+
     original_docx.build().pack(file).map_err(|err| {
         anyhow!(
             "{}Unable to pack the output_docx into a `zip` file, {err}",
