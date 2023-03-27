@@ -199,8 +199,9 @@ pub(crate) fn redact_docx_and_write_json(
         )
     })?;
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
+
     let mut document: docx_rs::Document =
-        docx_rs::read_docx(&read_to_vec(&output_file_path)?)?.document;
+        docx_rs::read_docx(&read_to_vec(&docx_filepath)?)?.document;
     for child in document.children.iter_mut() {
         if let DocumentChild::Paragraph(para) = child {
             replace_matches_in_paragraph(
