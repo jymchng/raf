@@ -9,7 +9,7 @@ use std::io::Read;
 use std::path::PathBuf;
 
 pub(crate) fn redact_txt_and_write_json(
-    path: &mut PathBuf,
+    path: &PathBuf,
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
@@ -25,7 +25,7 @@ pub(crate) fn redact_txt_and_write_json(
 }
 
 pub(crate) fn redact_pdf_and_write_json(
-    path: &mut PathBuf,
+    path: &PathBuf,
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
@@ -87,7 +87,7 @@ pub(crate) fn redact_pdf_and_write_json(
 }
 
 pub(crate) fn redact_one_file(
-    path: &mut PathBuf,
+    path: &PathBuf,
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
@@ -116,7 +116,7 @@ pub(crate) fn redact_one_file(
 }
 
 pub(crate) fn redact_docx_and_write_json(
-    path: &mut PathBuf,
+    path: &PathBuf,
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
