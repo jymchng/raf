@@ -126,6 +126,7 @@ pub(crate) fn redact_docx_and_write_json(
     let mut original_docu = original_docx.document; // pluck `document` out
     for child in original_docu.children.iter_mut() {
         if let DocumentChild::Paragraph(para) = child {
+            // TODO consider DocumentChild::Table as well
             replace_matches_in_paragraph(para, regex_vec, &mut all_redacted_data);
         }
     }

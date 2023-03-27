@@ -10,6 +10,8 @@ use rayon::prelude::*;
 use regex::Regex;
 use std::fs;
 use text_colorizer::{ColoredString, Colorize};
+use std::collections::VecDeque;
+use std::path::PathBuf;
 
 lazy_static! {
     static ref RED_ERROR_STRING: ColoredString = "ERROR: ".red().bold();
@@ -17,6 +19,7 @@ lazy_static! {
 
 fn main() -> anyhow::Result<()> {
     let cmd = Opts::parse().cmd;
+    let queue = VecDeque::<PathBuf>::new();
 
     match cmd {
         FileOrFolder::Folder(opts) => {

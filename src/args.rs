@@ -24,6 +24,10 @@ pub struct FolderOpts {
     /// The type of redaction to be applied to the files, e.g. -t sgNRIC emails
     #[clap(short, long, required = true, multiple_values = true)]
     pub types: Vec<String>,
+
+    /// The type of redaction to be applied to the files, e.g. -t sgNRIC emails
+    #[clap(short, long, required = false)]
+    pub recursive: Vec<String>,
 }
 
 #[derive(Args, Debug)]
