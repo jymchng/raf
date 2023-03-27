@@ -198,14 +198,17 @@ pub(crate) fn redact_docx_and_write_json(
             output_file_path.display(),
         )
     })?;
-
+    let mut all_redacted_data: Vec<RedactedData> = Vec::new();
     let mut document: docx_rs::Document =
         docx_rs::read_docx(&read_to_vec(&output_file_path)?)?.document;
     for child in document.children.iter_mut() {
         if let DocumentChild::Paragraph(para) = child {
-            for regex in regex_vec {
-                replace_matches_in_paragraph(para, regex, utils::randomize_string);
-            }
+            replace_matches_in_paragraph(
+                para,
+                regex_vec,
+                &mut all_redacted_data,
+                utils::randomize_string,
+            );
         }
     }
     anyhow::Ok(())
@@ -219,7 +222,8 @@ fn read_to_vec(file_name: &PathBuf) -> anyhow::Result<Vec<u8>> {
 
 pub(crate) fn replace_matches_in_paragraph<'a>(
     para: &mut docx_rs::Paragraph,
-    regex: &Regex,
+    regex_vec: &[Regex],
+    all_redacted_data: &mut Vec<RedactedData>,
     replacer: impl Fn(&str) -> String,
 ) {
     // For now support only run and ins.
@@ -230,19 +234,9 @@ pub(crate) fn replace_matches_in_paragraph<'a>(
                     if let InsertChild::Run(r) = c {
                         for c in r.children.iter_mut() {
                             if let RunChild::Text(t) = c {
-                                let mut offset = 0;
-                                let mut new_text = "".to_string();
-                                for m in regex.find_iter(&t.text) {
-                                    let start = m.start() + offset;
-                                    let end = m.end() + offset;
-                                    let matched = &t.text[start..end];
-                                    let replacement = replacer(matched);
-                                    new_text.push_str(&t.text[offset..start]);
-                                    new_text.push_str(&replacement);
-                                    offset = end;
-                                }
-                                new_text.push_str(&t.text[offset..]);
-                                t.text = new_text;
+                                let (_, redacted_data) = utils::redact_text_get_data(&t.text, &regex_vec)
+                                .unwrap_or_default();
+                                all_redacted_data.extend(redacted_data);
                             }
                         }
                     }
@@ -253,17 +247,7 @@ pub(crate) fn replace_matches_in_paragraph<'a>(
                     if let RunChild::Text(t) = c {
                         let mut offset = 0;
                         let mut new_text = "".to_string();
-                        for m in regex.find_iter(&t.text) {
-                            let start = m.start() + offset;
-                            let end = m.end() + offset;
-                            let matched = &t.text[start..end];
-                            let replacement = replacer(matched);
-                            new_text.push_str(&t.text[offset..start]);
-                            new_text.push_str(&replacement);
-                            offset = end;
-                        }
-                        new_text.push_str(&t.text[offset..]);
-                        t.text = new_text;
+                        todo!()
                     }
                 }
             }
