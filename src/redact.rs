@@ -19,27 +19,7 @@ pub(crate) fn redact_txt_and_write_json(
         .map_err(|err| anyhow!("Unable to get redacted text and the unredacted data, {err}"))?;
     all_redacted_data.extend(redacted_data);
 
-    let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
-        "{} Unable to join {} with the `file_name` of {}",
-        *RED_ERROR_STRING,
-        output_folder.display(),
-        path.display()
-    ))?);
-
-    let mut file = fs::File::create(output_path).map_err(|err| {
-        anyhow!(
-            "{}Unable to create the redacted text file, {err}",
-            *RED_ERROR_STRING
-        )
-    })?;
-
-    file.write_all(redacted_text.as_bytes()).map_err(|err| {
-        anyhow!(
-            "{}Unable to write the redacted text file, {err}",
-            *RED_ERROR_STRING
-        )
-    })?;
-
+    utils::write_redacted_text(redacted_text, &*path, output_folder);
     utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
     anyhow::Ok(())
 }

@@ -9,6 +9,7 @@ use std::dbg;
 use std::fs;
 use std::ops::Deref;
 use std::path::PathBuf;
+use std::io::Write;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
@@ -232,5 +233,29 @@ pub(crate) fn write_redacted_data_json(all_redacted_data: Vec<RedactedData>, pat
 
     serde_json::to_writer_pretty(unredacted_file, &all_redacted_data)
         .map_err(|err| anyhow!("{}Failed to write file, {err}", *RED_ERROR_STRING))?;
+    anyhow::Ok(())
+}
+
+pub(crate) fn write_redacted_text<S: AsRef<[u8]>>(redacted_text: S, path: &PathBuf, output_folder: &PathBuf) -> anyhow::Result<()> {
+    let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
+        "{} Unable to join {} with the `file_name` of {}",
+        *RED_ERROR_STRING,
+        output_folder.display(),
+        path.display()
+    ))?);
+
+    let mut file = fs::File::create(output_path).map_err(|err| {
+        anyhow!(
+            "{}Unable to create the redacted text file, {err}",
+            *RED_ERROR_STRING
+        )
+    })?;
+
+    file.write_all(redacted_text.as_ref()).map_err(|err| {
+        anyhow!(
+            "{}Unable to write the redacted text file, {err}",
+            *RED_ERROR_STRING
+        )
+    })?;
     anyhow::Ok(())
 }
