@@ -1,10 +1,11 @@
 use crate::utils::RedactedData;
 use crate::{utils, RED_ERROR_STRING};
 use anyhow::anyhow;
+use docx_rs::*;
 use lopdf::Document;
 use regex::Regex;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 
 pub(crate) fn redact_txt_and_write_json(
@@ -156,6 +157,7 @@ pub(crate) fn redact_one_file(
         match extension.to_str() {
             Some("txt") => redact_txt_and_write_json(path, &regex_vec, &output_folder),
             Some("pdf") => redact_pdf_and_write_json(path, &regex_vec, &output_folder),
+            Some("docx") => redact_docx_and_write_json(path, &regex_vec, &output_folder),
             Some(_) => Err(anyhow!(
                 "{}Extension: {:?} not implemented",
                 *RED_ERROR_STRING,
@@ -172,5 +174,100 @@ pub(crate) fn redact_one_file(
             *RED_ERROR_STRING,
             path.display()
         ))
+    }
+}
+
+pub(crate) fn redact_docx_and_write_json(
+    docx_filepath: &mut PathBuf,
+    regex_vec: &[Regex],
+    output_folder: &PathBuf,
+) -> anyhow::Result<()> {
+    let file_name = std::path::Path::new(docx_filepath)
+        .file_name()
+        .unwrap_or_default()
+        .to_str()
+        .unwrap_or_default();
+
+    let output_file_path = std::path::Path::new(output_folder).join(file_name);
+
+    fs::copy(&*docx_filepath, &*output_file_path).map_err(|err| {
+        anyhow!(
+            "{}Error in copying from {} to {}",
+            *RED_ERROR_STRING,
+            docx_filepath.display(),
+            output_file_path.display(),
+        )
+    })?;
+
+    let mut document: docx_rs::Document =
+        docx_rs::read_docx(&read_to_vec(&output_file_path)?)?.document;
+    for child in document.children.iter_mut() {
+        if let DocumentChild::Paragraph(para) = child {
+            for regex in regex_vec {
+                replace_matches_in_paragraph(para, regex, utils::randomize_string);
+            }
+        }
+    }
+    anyhow::Ok(())
+}
+
+fn read_to_vec(file_name: &PathBuf) -> anyhow::Result<Vec<u8>> {
+    let mut buf = Vec::new();
+    std::fs::File::open(file_name)?.read_to_end(&mut buf)?;
+    Ok(buf)
+}
+
+pub(crate) fn replace_matches_in_paragraph<'a>(
+    para: &mut docx_rs::Paragraph,
+    regex: &Regex,
+    replacer: impl Fn(&str) -> String,
+) {
+    // For now support only run and ins.
+    for c in para.children.iter_mut() {
+        match c {
+            ParagraphChild::Insert(i) => {
+                for c in i.children.iter_mut() {
+                    if let InsertChild::Run(r) = c {
+                        for c in r.children.iter_mut() {
+                            if let RunChild::Text(t) = c {
+                                let mut offset = 0;
+                                let mut new_text = "".to_string();
+                                for m in regex.find_iter(&t.text) {
+                                    let start = m.start() + offset;
+                                    let end = m.end() + offset;
+                                    let matched = &t.text[start..end];
+                                    let replacement = replacer(matched);
+                                    new_text.push_str(&t.text[offset..start]);
+                                    new_text.push_str(&replacement);
+                                    offset = end;
+                                }
+                                new_text.push_str(&t.text[offset..]);
+                                t.text = new_text;
+                            }
+                        }
+                    }
+                }
+            }
+            ParagraphChild::Run(run) => {
+                for c in run.children.iter_mut() {
+                    if let RunChild::Text(t) = c {
+                        let mut offset = 0;
+                        let mut new_text = "".to_string();
+                        for m in regex.find_iter(&t.text) {
+                            let start = m.start() + offset;
+                            let end = m.end() + offset;
+                            let matched = &t.text[start..end];
+                            let replacement = replacer(matched);
+                            new_text.push_str(&t.text[offset..start]);
+                            new_text.push_str(&replacement);
+                            offset = end;
+                        }
+                        new_text.push_str(&t.text[offset..]);
+                        t.text = new_text;
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }

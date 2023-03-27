@@ -88,7 +88,7 @@ pub(crate) fn redact_text_get_data(
     Ok((redacted_text, redacted_data))
 }
 
-fn randomize_string(s: &str) -> String {
+pub(crate) fn randomize_string(s: &str) -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(s.len())
