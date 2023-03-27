@@ -207,3 +207,30 @@ mod tests {
         Ok(())
     }
 }
+
+pub(crate) fn write_redacted_data_json(all_redacted_data: Vec<RedactedData>, path: &PathBuf, output_folder: &PathBuf) -> anyhow::Result<()> {
+    let mut redacted_json_data_file_path = path
+        .file_stem()
+        .ok_or(anyhow!(
+            "{} Unable to get the `file_stem` of {}\n",
+            *RED_ERROR_STRING,
+            path.display(),
+        ))?
+        .to_os_string();
+
+    redacted_json_data_file_path.push("-unredact.json");
+
+    let unredacted_file_path = output_folder.join(redacted_json_data_file_path);
+
+    let unredacted_file = fs::File::create(unredacted_file_path.clone()).map_err(|err| {
+        anyhow!(
+            "{}Failed to create file {:?}, {err}",
+            *RED_ERROR_STRING,
+            unredacted_file_path
+        )
+    })?;
+
+    serde_json::to_writer_pretty(unredacted_file, &all_redacted_data)
+        .map_err(|err| anyhow!("{}Failed to write file, {err}", *RED_ERROR_STRING))?;
+    anyhow::Ok(())
+}

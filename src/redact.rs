@@ -13,9 +13,11 @@ pub(crate) fn redact_txt_and_write_json(
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
+    let mut all_redacted_data: Vec<RedactedData> = Vec::new();
     let text = fs::read_to_string(&*path).expect("Failed to read file.");
     let (redacted_text, redacted_data) = utils::redact_text_get_data(&text, &regex_vec)
         .map_err(|err| anyhow!("Unable to get redacted text and the unredacted data, {err}"))?;
+    all_redacted_data.extend(redacted_data);
 
     let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
         "{} Unable to join {} with the `file_name` of {}",
@@ -38,29 +40,7 @@ pub(crate) fn redact_txt_and_write_json(
         )
     })?;
 
-    let mut redacted_json_data_file_path = path
-        .file_stem()
-        .ok_or(anyhow!(
-            "{} Unable to get the `file_stem` of {}\n",
-            *RED_ERROR_STRING,
-            path.display(),
-        ))?
-        .to_os_string();
-
-    redacted_json_data_file_path.push("-unredact.json");
-
-    let unredacted_file_path = output_folder.join(redacted_json_data_file_path);
-
-    let unredacted_file = fs::File::create(unredacted_file_path.clone()).map_err(|err| {
-        anyhow!(
-            "{}Failed to create file {:?}, {err}",
-            *RED_ERROR_STRING,
-            unredacted_file_path
-        )
-    })?;
-
-    serde_json::to_writer_pretty(unredacted_file, &redacted_data)
-        .map_err(|err| anyhow!("{}Failed to write file, {err}", *RED_ERROR_STRING))?;
+    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
     anyhow::Ok(())
 }
 
@@ -121,30 +101,8 @@ pub(crate) fn redact_pdf_and_write_json(
             output_path.display()
         )
     })?;
-
-    let mut redacted_json_data_file_path = path
-        .file_stem()
-        .ok_or(anyhow!(
-            "{} Unable to get the `file_stem` of {}\n",
-            *RED_ERROR_STRING,
-            path.display(),
-        ))?
-        .to_os_string();
-
-    redacted_json_data_file_path.push("-unredact.json");
-
-    let unredacted_file_path = output_folder.join(redacted_json_data_file_path);
-
-    let unredacted_file = fs::File::create(unredacted_file_path.clone()).map_err(|err| {
-        anyhow!(
-            "{}Failed to create file {:?}, {err}",
-            *RED_ERROR_STRING,
-            unredacted_file_path
-        )
-    })?;
-
-    serde_json::to_writer_pretty(unredacted_file, &all_redacted_data)
-        .map_err(|err| anyhow!("{}Failed to write file, {err}", *RED_ERROR_STRING))?;
+    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
+    
     anyhow::Ok(())
 }
 
