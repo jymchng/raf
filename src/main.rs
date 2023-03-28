@@ -1,6 +1,7 @@
 mod args;
 mod redact;
 mod utils;
+mod pdf;
 
 use crate::args::*;
 use anyhow::Ok;

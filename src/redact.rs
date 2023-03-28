@@ -1,5 +1,4 @@
-use crate::utils::RedactedData;
-use crate::{utils, RED_ERROR_STRING};
+use crate::{utils::{self, RedactedData}, RED_ERROR_STRING, pdf};
 use anyhow::anyhow;
 use docx_rs::*;
 use lopdf::Document;
@@ -29,36 +28,10 @@ pub(crate) fn redact_pdf_and_write_json(
     regex_vec: &[Regex],
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
-    let mut all_redacted_data: Vec<RedactedData> = Vec::new();
     let mut pdf = Document::load(path.clone())
         .map_err(|err| anyhow!("{}Unable to load the pdf, {err}", *RED_ERROR_STRING))?;
-    let page_nums: u32 = pdf.get_pages().len().try_into().map_err(|err| {
-        anyhow!(
-            "{}Unable to convert `usize` into `u32`, {err}",
-            *RED_ERROR_STRING
-        )
-    })?;
-
-    for page_num in 1..page_nums + 1 {
-        let extracted_text = pdf
-            .extract_text(&[page_num])
-            .map_err(|err| anyhow!("{}Unable to extract the text, {err}", *RED_ERROR_STRING))?;
-        let (redacted_text, redacted_data) =
-            utils::redact_text_get_data(&extracted_text, &regex_vec).map_err(|err| {
-                anyhow!(
-                    "{}Unable to get redacted text and the unredacted data, {err}",
-                    *RED_ERROR_STRING
-                )
-            })?;
-        all_redacted_data.extend(redacted_data);
-        pdf.replace_text(page_num, &extracted_text, &redacted_text)
-            .map_err(|err| {
-                anyhow!(
-                    "{}Unable to get replace the text of pdf for page number {page_num}, {err}",
-                    *RED_ERROR_STRING
-                )
-            })?;
-    }
+    
+    let all_redacted_data = pdf::replace_text(&mut pdf, regex_vec)?;
 
     let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
         "{} Unable to join {} with the `file_name` of {}",
@@ -66,13 +39,6 @@ pub(crate) fn redact_pdf_and_write_json(
         output_folder.display(),
         path.display()
     ))?);
-
-    // let mut file = fs::File::create(output_path).map_err(|err| {
-    //     anyhow!(
-    //         "{}Unable to create the redacted text file, {err}",
-    //         *RED_ERROR_STRING
-    //     )
-    // })?;
 
     pdf.save(&output_path).map_err(|err| {
         anyhow!(
@@ -82,7 +48,6 @@ pub(crate) fn redact_pdf_and_write_json(
         )
     })?;
     utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
-
     anyhow::Ok(())
 }
 

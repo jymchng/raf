@@ -3,16 +3,18 @@
 
 <p>
 
-A command line interface tool that helps you to redact text that matches a certain regex in a document.
+A command line tool that helps you to redact texts in file(s) that match a certain regex.
 
 It is inspired by the following:
 
 1. [PyRedactKit](https://github.com/brootware/PyRedactKit)
-2. [py-redact](https://github.com/datumbrain/py-redact/blob/master/py_redact/docx_redactor.py)
+2. [py-redact](https://github.com/datumbrain/py-redact)
+3. [redact](https://github.com/wils0ns/redact)
+4. [go-scrub](https://github.com/ssrathi/go-scrub)
 
 # Usage
 **Disclaimer**:
-Sadly, for now, you can only redact `.txt` file. `lopdf` crate was used to redact `.pdf` files but it is a failure, the codes still remain, I may work on it some day in the future to see how it can be done.
+Sadly, for now, you can only redact `.txt` and `.docx` files.
 
 1. Git clone this repo
 
@@ -23,7 +25,7 @@ git clone https://github.com/jymchng/raf.git
 
 2. `cargo run` it
 
-Example, to redact all sgNRIC and emails text for all files in a folder use:
+Example, to redact all sgNRIC and emails text for all files in a folder, use:
 ```
 cargo run -- folder ./tests/test_files -t sgNRIC emails
 ```
