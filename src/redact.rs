@@ -162,6 +162,7 @@ fn read_to_vec(file_name: &PathBuf) -> anyhow::Result<Vec<u8>> {
     Ok(buf)
 }
 
+/// Use in `.docx` files. 
 pub(crate) fn replace_matches_in_paragraph<'a>(
     para: &mut docx_rs::Paragraph,
     regex_vec: &[Regex],
