@@ -24,12 +24,12 @@ pub enum FileOrFolder {
 
 #[derive(Args, Debug)]
 pub struct FolderOpts {
-    /// `path` of the directory in which all files in it should be redacted,
+    /// `path` of the directory in which all files in it should be redacted.
     /// Example: On Windows => `./tests/test_files`
     #[clap(parse(from_os_str), required = true)]
     pub path: std::path::PathBuf,
 
-    /// The type of redaction to be applied to the files,
+    /// The type of redaction to be applied to the files.
     /// Example: `-t sgNRIC emails`, specifies to redact all text that matches the regexes of `sgNRIC` and `emails`
     #[clap(short, long, required = true, multiple_values = true)]
     pub types: Vec<String>,
@@ -42,12 +42,12 @@ pub struct FolderOpts {
 
 #[derive(Args, Debug)]
 pub struct FileOpts {
-    /// `path` of the directory in which all files should be redacted,
-    /// Example: On Windows => `./tests/test_files`
+    /// `path` of the directory in which all files should be redacted.
+    /// Example, on Windows: `./tests/test_files`
     #[clap(parse(from_os_str), required = true)]
     pub path: std::path::PathBuf,
 
-    /// The type of redaction to be applied to the files,
+    /// The type of redaction to be applied to the files.
     /// Example: `-t sgNRIC emails`, specifies to redact all text that matches the regexes of `sgNRIC` and `emails`
     #[clap(short, long, required = true, multiple_values = true)]
     pub types: Vec<String>,

@@ -5,7 +5,6 @@ use rand::{distributions::Alphanumeric, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::dbg;
 use std::fs;
 use std::io::Write;
 use std::ops::Deref;
