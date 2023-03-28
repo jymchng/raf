@@ -38,8 +38,7 @@ fn main() -> anyhow::Result<()> {
                     fs::create_dir(&output_folder).expect("Failed to create output folder.");
                 };
 
-                let (mut files, dirs, _) = utils::get_files_dirs_from_folder(&path)?;
-                dbg!(&dirs);
+                let (files, dirs, _) = utils::get_files_dirs_from_folder(&path)?;
                 if opts.recursive {
                     let dirs = dirs.into_iter().filter(|dir| {
                         // filter out dir name == `redacted`
@@ -52,27 +51,15 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 let results: Vec<anyhow::Result<()>> = files
-                    .par_iter_mut()
+                    .par_iter()
                     .map(|path| redact::redact_one_file(path, &regex_vec, &output_folder))
                     .collect::<Vec<anyhow::Result<()>>>(); // end of for_each
 
                 println!("Processed results: {:?}", results);
+                println!("A folder named `redacted` at {} has been created containing all the redacted files in {}",
+                        output_folder.display(),
+                        path.display());
             }
-            // let output_folder = opts.path.join("redacted");
-            // let regex_vec: Vec<Regex> = utils::get_pattern_vec("patterns.json", opts.types)?;
-
-            // if !output_folder.exists() {
-            //     fs::create_dir(&output_folder).expect("Failed to create output folder.");
-            // };
-
-            // let (mut files, mut dirs, _) = utils::get_files_dirs_from_folder(&opts.path)?;
-
-            // let results: Vec<anyhow::Result<()>> = files
-            //     .par_iter_mut()
-            //     .map(|path| redact::redact_one_file(path, &regex_vec, &output_folder))
-            //     .collect::<Vec<anyhow::Result<()>>>(); // end of for_each
-
-            // println!("Processed results: {:?}", results);
             Ok(())
         }
         FileOrFolder::File(mut opts) => {

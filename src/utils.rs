@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::dbg;
 use std::fs;
-use std::ops::Deref;
-use std::path::{PathBuf, Path};
 use std::io::Write;
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
 pub struct RedactedData {
@@ -33,7 +33,9 @@ pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pa
     })
 }
 
-pub(crate) fn get_files_dirs_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec<PathBuf>, Vec<anyhow::Error>)> {
+pub(crate) fn get_files_dirs_from_folder(
+    path: &PathBuf,
+) -> Result<(Vec<PathBuf>, Vec<PathBuf>, Vec<anyhow::Error>)> {
     let entries = path.read_dir().map_err(|err| {
         anyhow!(
             "{}Directory: {} cannot be read, err = {err}",
@@ -205,7 +207,11 @@ mod tests {
     }
 }
 
-pub(crate) fn write_redacted_data_json(all_redacted_data: Vec<RedactedData>, path: &PathBuf, output_folder: &PathBuf) -> anyhow::Result<()> {
+pub(crate) fn write_redacted_data_json(
+    all_redacted_data: Vec<RedactedData>,
+    path: &PathBuf,
+    output_folder: &PathBuf,
+) -> anyhow::Result<()> {
     let mut redacted_json_data_file_path = path
         .file_stem()
         .ok_or(anyhow!(
@@ -232,7 +238,11 @@ pub(crate) fn write_redacted_data_json(all_redacted_data: Vec<RedactedData>, pat
     anyhow::Ok(())
 }
 
-pub(crate) fn write_redacted_text<S: AsRef<[u8]>>(redacted_text: S, path: &PathBuf, output_folder: &PathBuf) -> anyhow::Result<()> {
+pub(crate) fn write_redacted_text<S: AsRef<[u8]>>(
+    redacted_text: S,
+    path: &PathBuf,
+    output_folder: &PathBuf,
+) -> anyhow::Result<()> {
     let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
         "{} Unable to join {} with the `file_name` of {}",
         *RED_ERROR_STRING,
