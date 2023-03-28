@@ -8,7 +8,7 @@ use serde_json;
 use std::dbg;
 use std::fs;
 use std::ops::Deref;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::io::Write;
 
 #[derive(Debug, Deserialize, PartialEq, Serialize, Clone, Default)]
@@ -33,7 +33,7 @@ pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pa
     })
 }
 
-pub(crate) fn get_files_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec<anyhow::Error>)> {
+pub(crate) fn get_files_dirs_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec<PathBuf>, Vec<anyhow::Error>)> {
     let entries = path.read_dir().map_err(|err| {
         anyhow!(
             "{}Directory: {} cannot be read, err = {err}",
@@ -45,15 +45,12 @@ pub(crate) fn get_files_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec
         // https://doc.rust-lang.org/rust-by-example/error/iter_result.html
         .into_iter()
         .partition(Result::is_ok);
-    let entries = entries
+    let (files, dirs): (Vec<_>, Vec<_>) = entries
         .into_iter()
         .map(Result::unwrap)
         .map(|entry| entry.path())
-        .filter(|path| match fs::metadata(path) {
-            Ok(md) => md.is_file(),
-            Err(_) => false,
-        })
-        .collect();
+        .partition(|p| Path::is_file(p));
+
     let errors = errors
         .into_iter()
         .map(Result::unwrap_err)
@@ -64,7 +61,7 @@ pub(crate) fn get_files_from_folder(path: &PathBuf) -> Result<(Vec<PathBuf>, Vec
             )
         })
         .collect();
-    Ok((entries, errors))
+    Ok((files, dirs, errors))
 }
 
 pub(crate) fn redact_text_get_data(
