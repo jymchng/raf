@@ -27,7 +27,7 @@ Sadly, for now, you can only redact `.txt` and `.docx` files.
 
 # Usage
 
-You need to be Rust installed first.
+You need to have Rust [installed](https://www.rust-lang.org/tools/install) first.
 
 # Via `Cargo Run`
 1. Git clone this repo
@@ -94,4 +94,12 @@ cargo install --git https://github.com/jymchng/raf.git
 Then use the commands as discussed in the previous section. Example:
 ```
 raf file ./tests/test_files/file1.txt -t sgNRIC email
+```
+
+# Help
+You can always use the `--help` command to read the `help` section of `raf.
+
+Example:
+```
+raf folder --help
 ```
