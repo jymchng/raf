@@ -1,4 +1,7 @@
-<div align='center'><h1> raf (incomplete) </h1></div>
+<p align="center">
+  <img src='./assets/logo.png'/>
+</p>
+<div align='center'><h1>raf (incomplete) </h1></div>
 <div align='center'><i> redact all files!!!<p>(actually only two types of file, lol) </i></div>
 
 <p>

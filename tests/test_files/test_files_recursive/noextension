@@ -1,0 +1,7 @@
+If you're reading this, chances are you have an email address. Whether it's a personal or a professional one, email has become an essential means of communication in our modern world. But have you ever wondered how email addresses work, and how they're validated?
+
+Well, to start with, email addresses are usually composed of two parts: a username and a domain name. The username can contain letters, digits, and certain special characters, such as periods, underscores, and plus signs. The domain name, on the other hand, consists of one or more parts separated by periods, and can contain letters, digits, and hyphens.
+
+To ensure that an email address is valid, it needs to match a certain pattern. This pattern can be quite complex, but a common one is the following: ([a-z0-9!#$%&'*+/=?^_`{|.}~-]+@(?:a-z0-9?.)+a-z0-9?). This pattern checks that the username and domain name are properly formatted, and that they're separated by an "@" symbol.
+
+So next time you're asked to provide your email address, you can rest assured that if it matches this pattern, it's a valid one!
