@@ -90,13 +90,13 @@ pub(crate) fn redact_docx_and_write_json(
     let mut original_docx = docx_rs::read_docx(&read_to_vec(&path)?)?;
     let mut original_docu = original_docx.document; // pluck `document` out
     for child in original_docu.children.iter_mut() {
-        if let DocumentChild::Paragraph(para) = child {
-            // TODO consider DocumentChild::Table as well
-            replace_matches_in_paragraph(para, regex_vec, &mut all_redacted_data);
+        match child {
+            DocumentChild::Paragraph(para) => replace_matches_in_paragraph(para, regex_vec, &mut all_redacted_data),
+            _ => {},
         }
     }
     original_docx.document = original_docu; // insert `document` back
-
+    
     let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
         "{} Unable to join {} with the `file_name` of {}",
         *RED_ERROR_STRING,

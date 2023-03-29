@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "unredacted_text": "tommy_boy@yahoo.com",
+    "redacted_text": "UqSJEEp66Cbs8MfYwAT"
+  },
+  {
+    "unredacted_text": "jane.smith@hotmail.com",
+    "redacted_text": "WO3DXKyNPmLntJ8yD17Ohv"
+  },
+  {
+    "unredacted_text": "john.doe@gmail.com",
+    "redacted_text": "OHZWpob3hyPynBmcDW"
+  },
+  {
+    "unredacted_text": "tommy.boy@techcorp.com",
+    "redacted_text": "CCl15fxupkHkccdPmwqJbY"
+  },
+  {
+    "unredacted_text": "jane.smith@lawfirm.net",
+    "redacted_text": "nsSFm4WbOMXNSmvl6Cj5UA"
+  },
+  {
+    "unredacted_text": "john.doe@acme.com",
+    "redacted_text": "6hneiXprKEnxHjHgL"
+  },
+  {
+    "unredacted_text": "tommy.boy@guerillamail.com",
+    "redacted_text": "jR4FkKkeFpQfvDeabO8gvk3SqX"
+  },
+  {
+    "unredacted_text": "jane.smith@10minutemail.com",
+    "redacted_text": "t16tC8yerd3DnX92dSrP9QsVvzN"
+  },
+  {
+    "unredacted_text": "john.doe+123@mailinator.com",
+    "redacted_text": "aoSXAIQzNljpLmxGcvfK2wAXA0u"
+  },
+  {
+    "unredacted_text": "+65 81234567",
+    "redacted_text": "QKHKyMsLbk3G"
+  },
+  {
+    "unredacted_text": "+65 91234567",
+    "redacted_text": "iEMr7duM30Fc"
+  },
+  {
+    "unredacted_text": "+65 31234567",
+    "redacted_text": "DeSn36CoCiPO"
+  },
+  {
+    "unredacted_text": "+65 61234567",
+    "redacted_text": "KasMsxbhxrRm"
+  },
+  {
+    "unredacted_text": "+65 800-1234567",
+    "redacted_text": "ILEmtKcegn6ELdX"
+  },
+  {
+    "unredacted_text": "+65 1800-1234567",
+    "redacted_text": "DJfxQ9TKzT1Enwch"
+  }
+]
