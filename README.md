@@ -49,7 +49,7 @@ You need to have Rust [installed](https://www.rust-lang.org/tools/install) first
 git clone https://github.com/jymchng/raf.git
 ```
 
-1. `cargo run` it
+2. `cargo run` it
 
 Example, to redact all `phone` and `emails` texts for all files in a folder, use:
 ```
