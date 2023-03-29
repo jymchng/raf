@@ -14,7 +14,7 @@ It is inspired by the following:
 2. [py-redact](https://github.com/datumbrain/py-redact)
 3. [redact](https://github.com/wils0ns/redact)
 4. [go-scrub](https://github.com/ssrathi/go-scrub)
-
+5. [pdf-redactor](https://github.com/JoshData/pdf-redactor)
 
 # What it does
 

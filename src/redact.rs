@@ -59,7 +59,7 @@ pub(crate) fn redact_one_file(
     if let Some(extension) = path.extension() {
         match extension.to_str() {
             Some("txt") => redact_txt_and_write_json(path, &regex_vec, &output_folder),
-            Some("pdf") => redact_pdf_and_write_json(path, &regex_vec, &output_folder),
+            // Some("pdf") => redact_pdf_and_write_json(path, &regex_vec, &output_folder),
             Some("docx") => redact_docx_and_write_json(path, &regex_vec, &output_folder),
             Some(_) => Err(anyhow!(
                 "{}Extension: {:?} not implemented",
