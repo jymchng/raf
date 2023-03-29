@@ -1,10 +1,10 @@
 mod args;
+mod pdf;
 mod redact;
 mod utils;
-mod pdf;
 
 use crate::args::*;
-use anyhow::Ok;
+use anyhow::{Ok, anyhow};
 use clap::Parser;
 use lazy_static::lazy_static;
 use rayon::prelude::*;
@@ -36,7 +36,12 @@ fn main() -> anyhow::Result<()> {
                 let output_folder = path.join("redacted");
 
                 if !output_folder.exists() {
-                    fs::create_dir(&output_folder).expect("Failed to create output folder.");
+                    fs::create_dir(&output_folder).map_err(|err| {
+                        anyhow!(
+                            "{}Failed to create output folder, {err}.",
+                            *RED_ERROR_STRING
+                        )
+                    })?;
                 };
 
                 let (files, dirs, _) = utils::get_files_dirs_from_folder(&path)?;
