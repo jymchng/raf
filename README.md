@@ -1,12 +1,22 @@
 <p align="center">
   <img src='./assets/logo.png'/>
 </p>
+
+[![Actions](https://img.shields.io/github/actions/workflow/status/jymchng/raf/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/jymchng/raf/actions)
+[![Coverage](https://img.shields.io/codecov/c/gh/jymchng/raf/branch/main.svg?style=flat-square&maxAge=3600)](https://codecov.io/gh/jymchng/raf/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
+[![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/jymchng/raf/)
+[![Issues](https://img.shields.io/github/issues/jymchng/raf.svg?style=flat-square&maxAge=600)](https://github.com/jymchng/raf/issues)
+[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/jymchng/raf/blob/master/CHANGELOG.md)
+
 <div align='center'><h1>raf (incomplete) </h1></div>
 <div align='center'><i> redact all files!!!<p>(actually only two types of file, lol) </i></div>
 
 <p>
 
 A command line tool, written in Rust, to redact texts in file(s) that match a certain regex.
+
+
 
 It is inspired by the following:
 
