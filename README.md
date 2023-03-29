@@ -38,15 +38,15 @@ git clone https://github.com/jymchng/raf.git
 
 1. `cargo run` it
 
-Example, to redact all `sgNRIC` and `emails` texts for all files in a folder, use:
+Example, to redact all `phone` and `emails` texts for all files in a folder, use:
 ```
-cargo run -- folder ./tests/test_files -t sgNRIC emails
+cargo run -- folder ./tests/test_files -t phone emails
 ```
 Note the `folder` subcommand.
 
 Or you can use:
 ```rust
-cargo run -- folder ./tests/test_files -t sgNRIC
+cargo run -- folder ./tests/test_files -t phone
 ```
 This is because `email` and `emails` are categorized under the list of `types` in the `patterns.json` file, i.e.:
 
@@ -60,11 +60,11 @@ This is because `email` and `emails` are categorized under the list of `types` i
 }
 ```
 
-Currently, only `email` and `sgNRIC` are supported.
+Currently, only `email` and `phone` are supported.
 
 To redact files in sub-directories of your `folder`, use:
 ```rust
-cargo run -- folder ./tests/test_files -t sgNRIC  -r
+cargo run -- folder ./tests/test_files -t phone  -r
 ```
 Note the `-r` parameter.
 
@@ -93,11 +93,11 @@ cargo install --git https://github.com/jymchng/raf.git
 
 Then use the commands as discussed in the previous section. Example:
 ```
-raf file ./tests/test_files/file1.txt -t sgNRIC email
+raf file ./tests/test_files/file1.txt -t phone email
 ```
 
 # Help
-You can always use the `--help` command to read the `help` section of `raf.
+Use the `--help` command to read the `help` section of `raf.
 
 Example:
 ```

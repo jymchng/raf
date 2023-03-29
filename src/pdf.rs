@@ -94,8 +94,6 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
             match *operand {
                 Object::String(ref mut bytes, _) => {
                     let decoded_text = ISO_8859_1.decode(&bytes, DecoderTrap::Ignore).unwrap();
-                    dbg!(&decoded_text);
-                    dbg!(&current_encoding);
                     let (redacted_text, redacted_data) =
                         redact_text_get_data(&decoded_text, regex_vec).unwrap_or_default();
                     let encoded_bytes = ISO_8859_1.encode(&redacted_text, EncoderTrap::Ignore).unwrap();
@@ -104,8 +102,6 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
                     // dbg!(&bytes);
                 }
                 Object::Array(ref mut arr) => {
-                    dbg!(&arr);
-                    dbg!(&current_encoding);
                     collect_text(current_encoding, arr, all_redacted_data, regex_vec);
                 }
                 _ => {}
