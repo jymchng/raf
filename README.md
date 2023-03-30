@@ -45,21 +45,21 @@ You need to have Rust [installed](https://www.rust-lang.org/tools/install) first
 # Via `Cargo Run`
 1. Git clone this repo
 
-```
-git clone https://github.com/jymchng/raf.git
+```console
+$ git clone https://github.com/jymchng/raf.git
 ```
 
 2. `cargo run` it
 
 Example, to redact all `phone` and `emails` texts for all files in a folder, use:
 ```
-cargo run -- folder ./tests/test_files -t phone emails
+$ cargo run -- folder ./tests/test_files -t phone emails
 ```
 Note the `folder` subcommand.
 
 Or you can use:
 ```rust
-cargo run -- folder ./tests/test_files -t phone
+$ cargo run -- folder ./tests/test_files -t phone
 ```
 This is because `email` and `emails` are categorized under the list of `types` in the `patterns.json` file, i.e.:
 
@@ -77,7 +77,7 @@ Currently, only `email` and `phone` are supported.
 
 To redact files in sub-directories of your `folder`, use:
 ```rust
-cargo run -- folder ./tests/test_files -t phone  -r
+$ cargo run -- folder ./tests/test_files -t phone  -r
 ```
 Note the `-r` parameter.
 
@@ -101,12 +101,12 @@ Example:
 
 You can compile and build the binary using:
 ```
-cargo install --git https://github.com/jymchng/raf.git
+$ cargo install --git https://github.com/jymchng/raf.git
 ```
 
 Then use the commands as discussed in the previous section. Example:
 ```
-raf file ./tests/test_files/file1.txt -t phone email
+$ raf file ./tests/test_files/file1.txt -t phone email
 ```
 
 # Help
@@ -114,5 +114,5 @@ Use the `--help` command to read the `help` section of `raf.
 
 Example:
 ```
-raf folder --help
+$ raf folder --help
 ```

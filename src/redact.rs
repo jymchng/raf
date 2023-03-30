@@ -13,13 +13,13 @@ pub(crate) fn redact_txt_and_write_json(
     output_folder: &PathBuf,
 ) -> anyhow::Result<()> {
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
-    let text = fs::read_to_string(&*path).expect("Failed to read file.");
+    let text = fs::read_to_string(&path).expect("Failed to read file.");
     let (redacted_text, redacted_data) = utils::redact_text_get_data(&text, &regex_vec)
         .map_err(|err| anyhow!("Unable to get redacted text and the unredacted data, {err}"))?;
     all_redacted_data.extend(redacted_data);
 
-    utils::write_redacted_text(redacted_text, &*path, output_folder)?;
-    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
+    utils::write_redacted_text(redacted_text, &path, output_folder)?;
+    utils::write_redacted_data_json(all_redacted_data, &path, output_folder)?;
     anyhow::Ok(())
 }
 
@@ -47,7 +47,7 @@ pub(crate) fn redact_pdf_and_write_json(
             output_path.display()
         )
     })?;
-    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
+    utils::write_redacted_data_json(all_redacted_data, &path, output_folder)?;
     anyhow::Ok(())
 }
 
@@ -117,7 +117,7 @@ pub(crate) fn redact_docx_and_write_json(
             *RED_ERROR_STRING,
         )
     })?;
-    utils::write_redacted_data_json(all_redacted_data, &*path, output_folder)?;
+    utils::write_redacted_data_json(all_redacted_data, &path, output_folder)?;
     anyhow::Ok(())
 }
 
