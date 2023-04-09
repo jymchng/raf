@@ -59,7 +59,7 @@ Note the `folder` subcommand.
 
 Or you can use:
 ```rust
-$ cargo run -- folder ./tests/test_files -t phone
+$ cargo run -- folder ./tests/test_files -t phone email
 ```
 This is because `email` and `emails` are categorized under the list of `types` in the `patterns.json` file, i.e.:
 
@@ -73,11 +73,9 @@ This is because `email` and `emails` are categorized under the list of `types` i
 }
 ```
 
-Currently, only `email` and `phone` are supported.
-
-To redact files in sub-directories of your `folder`, use:
+To redact files in sub-directories of your `folder`, recursively, use:
 ```rust
-$ cargo run -- folder ./tests/test_files -t phone  -r
+$ cargo run -- folder ./tests/test_files -t phone -r
 ```
 Note the `-r` parameter.
 
