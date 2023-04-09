@@ -108,7 +108,7 @@ $ raf file ./tests/test_files/file1.txt -t phone email
 ```
 
 # Help
-Use the `--help` command to read the `help` section of `raf.
+Use the `--help` command to read the `help` section of `raf`.
 
 Example:
 ```
