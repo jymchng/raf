@@ -48,10 +48,7 @@ fn main() -> anyhow::Result<()> {
                 if opts.recursive {
                     let dirs = dirs.into_iter().filter(|dir| {
                         // filter out dir name == `redacted`
-                        match dir.file_name().unwrap_or_default().to_str() {
-                            Some("redacted") => false,
-                            _ => true,
-                        }
+                        matches!(dir.file_name().unwrap_or_default().to_str(), Some("redacted"))
                     });
                     queue.extend(dirs);
                 }
@@ -68,7 +65,7 @@ fn main() -> anyhow::Result<()> {
             }
             Ok(())
         }
-        FileOrFolder::File(mut opts) => {
+        FileOrFolder::File(opts) => {
             println!(
                 "File command executed with path {:?} and types {:?}",
                 opts.path, opts.types
@@ -79,7 +76,7 @@ fn main() -> anyhow::Result<()> {
             if !output_folder.exists() {
                 fs::create_dir(&output_folder).expect("Failed to create output folder.");
             };
-            redact::redact_one_file(&mut opts.path, &regex_vec, &output_folder)?;
+            redact::redact_one_file(&opts.path, &regex_vec, &output_folder)?;
             Ok(())
         }
     }

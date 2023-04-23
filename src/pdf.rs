@@ -2,7 +2,6 @@ use crate::utils::{redact_text_get_data, RedactedData};
 use crate::RED_ERROR_STRING;
 use anyhow::{anyhow, Result};
 use lopdf::{content::Content, Document, Object};
-use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 use regex::Regex;
 use std::collections::BTreeMap;
 use encoding::{Encoding, DecoderTrap, EncoderTrap};
@@ -93,7 +92,7 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
         for operand in operands.iter_mut() {
             match *operand {
                 Object::String(ref mut bytes, _) => {
-                    let decoded_text = ISO_8859_1.decode(&bytes, DecoderTrap::Ignore).unwrap();
+                    let decoded_text = ISO_8859_1.decode(bytes, DecoderTrap::Ignore).unwrap();
                     let (redacted_text, redacted_data) =
                         redact_text_get_data(&decoded_text, regex_vec).unwrap_or_default();
                     let encoded_bytes = ISO_8859_1.encode(&redacted_text, EncoderTrap::Ignore).unwrap();
@@ -110,7 +109,7 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
     }
     let pages = pdf_doc.get_pages();
     for page_number in pages.keys() {
-        let page_id = *pages.get(page_number).ok_or(anyhow!(
+        let page_id = *pages.get(page_number).ok_or_else(|| anyhow!(
             "{}Page number = {} not found",
             *RED_ERROR_STRING,
             page_number

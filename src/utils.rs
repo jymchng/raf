@@ -4,7 +4,6 @@ use anyhow::{anyhow, Result};
 use rand::{distributions::Alphanumeric, Rng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::fs;
 use std::io::Write;
 use std::ops::Deref;
@@ -33,7 +32,7 @@ pub(crate) fn get_patterns_from_json(json_file_content: String) -> Result<Vec<Pa
 }
 
 pub(crate) fn get_files_dirs_from_folder(
-    path: &PathBuf,
+    path: &Path,
 ) -> Result<(Vec<PathBuf>, Vec<PathBuf>, Vec<anyhow::Error>)> {
     let entries = path.read_dir().map_err(|err| {
         anyhow!(
@@ -102,7 +101,7 @@ pub(crate) fn get_pattern_vec(pattern_file: &str, types: Vec<String>) -> Result<
 
     let filtered_patterns: Vec<Pattern> = patterns
         .into_iter()
-        .filter(|p| p.types.iter().any(|t| types.contains(&t)))
+        .filter(|p| p.types.iter().any(|t| types.contains(t)))
         .collect();
 
     let regex_vec: Vec<Regex> = filtered_patterns
@@ -114,12 +113,12 @@ pub(crate) fn get_pattern_vec(pattern_file: &str, types: Vec<String>) -> Result<
 
 pub(crate) fn write_redacted_data_json(
     all_redacted_data: Vec<RedactedData>,
-    path: &PathBuf,
-    output_folder: &PathBuf,
+    path: &Path,
+    output_folder: &Path,
 ) -> anyhow::Result<()> {
     let mut redacted_json_data_file_path = path
         .file_stem()
-        .ok_or(anyhow!(
+        .ok_or_else(|| anyhow!(
             "{} Unable to get the `file_stem` of {}\n",
             *RED_ERROR_STRING,
             path.display(),
@@ -145,15 +144,17 @@ pub(crate) fn write_redacted_data_json(
 
 pub(crate) fn write_redacted_text<S: AsRef<[u8]>>(
     redacted_text: S,
-    path: &PathBuf,
-    output_folder: &PathBuf,
+    path: &Path,
+    output_folder: &Path,
 ) -> anyhow::Result<()> {
-    let output_path = output_folder.join(path.file_name().ok_or(anyhow!(
-        "{} Unable to join {} with the `file_name` of {}",
-        *RED_ERROR_STRING,
-        output_folder.display(),
-        path.display()
-    ))?);
+    let output_path = output_folder.join(path.file_name().ok_or_else(|| {
+        anyhow!(
+            "{} Unable to join {} with the `file_name` of {}",
+            *RED_ERROR_STRING,
+            output_folder.display(),
+            path.display()
+        )
+    })?);
 
     let mut file = fs::File::create(output_path).map_err(|err| {
         anyhow!(
@@ -264,5 +265,3 @@ mod tests {
         Ok(())
     }
 }
-
-
