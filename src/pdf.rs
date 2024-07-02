@@ -1,11 +1,18 @@
-use crate::utils::{redact_text_get_data, RedactedData};
+use crate::utils::{self, redact_text_get_data, RedactedData};
 use crate::RED_ERROR_STRING;
 use anyhow::{anyhow, Result};
-use lopdf::{content::Content, Document, Object};
-use regex::Regex;
-use std::collections::BTreeMap;
-use encoding::{Encoding, DecoderTrap, EncoderTrap};
 use encoding::all::ISO_8859_1;
+use encoding::{DecoderTrap, EncoderTrap, Encoding};
+use lopdf::{content::Content, Document, Object};
+use pdfium_render::{
+    page::PdfPage,
+    page_object::PdfPageObjectCommon,
+    page_objects_common::{PdfPageObjectsCommon, PdfPageObjectsIterator},
+    prelude::PdfDocument,
+};
+use regex::Regex;
+use std::borrow::BorrowMut;
+use std::collections::BTreeMap;
 
 // pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<RedactedData>> {
 //     fn collect_text(text: &mut String, encoding: Option<&str>, operands: &[Object]) {
@@ -22,7 +29,7 @@ use encoding::all::ISO_8859_1;
 //             }
 //         }
 //     }
-    
+
 //     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
 
 //     let pages = pdf_doc.get_pages();
@@ -78,9 +85,32 @@ use encoding::all::ISO_8859_1;
 //     anyhow::Ok(all_redacted_data)
 // }
 
+pub(crate) fn replace_text_pdfium(
+    pdf_doc: &mut PdfDocument,
+    regex_vec: &[Regex],
+) -> Result<Vec<RedactedData>> {
+    let mut all_redacted_data: Vec<RedactedData> = Vec::new();
+
+    for (page_index, pdf_page) in pdf_doc.pages_mut().iter().enumerate() {
+        for (object_index, mut object) in pdf_page.objects().borrow_mut().iter().enumerate() {
+
+            // For text objects, we take the extra step of outputting the text
+            // contained by the object.
+
+            if let Some(object) = object.as_text_object_mut() {
+                let object_text = object.text();
+                let (redacted_text, redacted_data) =
+                        redact_text_get_data(&object_text, regex_vec).unwrap_or_default();
+                object.set_text(redacted_text)?;
+                all_redacted_data.extend(redacted_data);
+            }
+        }
+    }
+    Ok(all_redacted_data)
+}
+
 /// First edited
 pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<RedactedData>> {
-
     let mut all_redacted_data: Vec<RedactedData> = Vec::new();
 
     fn collect_text(
@@ -95,7 +125,9 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
                     let decoded_text = ISO_8859_1.decode(bytes, DecoderTrap::Ignore).unwrap();
                     let (redacted_text, redacted_data) =
                         redact_text_get_data(&decoded_text, regex_vec).unwrap_or_default();
-                    let encoded_bytes = ISO_8859_1.encode(&redacted_text, EncoderTrap::Ignore).unwrap();
+                    let encoded_bytes = ISO_8859_1
+                        .encode(&redacted_text, EncoderTrap::Strict)
+                        .unwrap();
                     all_redacted_data.extend(redacted_data);
                     *bytes = encoded_bytes;
                     // dbg!(&bytes);
@@ -109,11 +141,13 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
     }
     let pages = pdf_doc.get_pages();
     for page_number in pages.keys() {
-        let page_id = *pages.get(page_number).ok_or_else(|| anyhow!(
-            "{}Page number = {} not found",
-            *RED_ERROR_STRING,
-            page_number
-        ))?;
+        let page_id = *pages.get(page_number).ok_or_else(|| {
+            anyhow!(
+                "{}Page number = {} not found",
+                *RED_ERROR_STRING,
+                page_number
+            )
+        })?;
         let fonts = pdf_doc.get_page_fonts(page_id);
         let encodings = fonts
             .into_iter()
@@ -152,7 +186,12 @@ pub fn replace_text(pdf_doc: &mut Document, regex_vec: &[Regex]) -> Result<Vec<R
         let modified_content = content.encode()?;
         pdf_doc
             .change_page_content(page_id, modified_content)
-            .map_err(|err| anyhow!("{}Unable to change content of pdf, {err}", *RED_ERROR_STRING))?;
+            .map_err(|err| {
+                anyhow!(
+                    "{}Unable to change content of pdf, {err}",
+                    *RED_ERROR_STRING
+                )
+            })?;
     }
     anyhow::Ok(all_redacted_data)
 }
