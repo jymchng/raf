@@ -6,6 +6,7 @@ use regex::Regex;
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use pdfium_render::{prelude::{PdfDocument, Pdfium}};
 
 pub(crate) fn redact_txt_and_write_json(
     path: &Path,
@@ -28,10 +29,10 @@ pub(crate) fn redact_pdf_and_write_json(
     regex_vec: &[Regex],
     output_folder: &Path,
 ) -> anyhow::Result<()> {
-    let mut pdf = Document::load(path)
-        .map_err(|err| anyhow!("{}Unable to load the pdf, {err}", *RED_ERROR_STRING))?;
+    let pdfium = Pdfium::default();
+    let mut pdf = pdfium.load_pdf_from_file(path, None)?;
     
-    let all_redacted_data = pdf::replace_text(&mut pdf, regex_vec)?;
+    let all_redacted_data = pdf::replace_text_pdfium(&mut pdf, regex_vec)?;
 
     let output_path = output_folder.join(path.file_name().ok_or_else(|| anyhow!(
         "{} Unable to join {} with the `file_name` of {}",
@@ -40,9 +41,9 @@ pub(crate) fn redact_pdf_and_write_json(
         path.display()
     ))?);
 
-    pdf.save(&output_path).map_err(|err| {
+    pdf.save_to_file(&output_path).map_err(|err| {
         anyhow!(
-            "{}Unable to save pdf to the redacted file path `{}`, {err}",
+            "{}Unable to save redacted pdf to the file path `{}`, {err}",
             *RED_ERROR_STRING,
             output_path.display()
         )
